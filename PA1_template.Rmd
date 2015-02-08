@@ -7,19 +7,46 @@ output:
 
 
 ## Loading and preprocessing the data
-
+library("lattice", lib.loc="~/R/win-library/3.1")
+data <- read.csv("./data/activity.csv")
 
 
 ## What is mean total number of steps taken per day?
-
+dev.copy(png,file="MeanSteps.png", width=480, height=480)
+plotdata <- tapply(data$steps, data$date, FUN = sum)
+hist(plotdata)
+summary(plotdata)
+dev.off()
 
 
 ## What is the average daily activity pattern?
-
+avgdata <- data[complete.cases(data),]
+meandata <- tapply(avgdata$steps, avgdata$interval, FUN = mean)
+plotnames <- names(meandata)
+dev.copy(png,file="AvgDaySteps.png", width=480, height=480)
+plot(meandata,type='l', ylab="Step Interval", xlab = "Average steps per day" main="Average daily activity pattern")
+dev.off()
 
 
 ## Imputing missing values
-
+sum(is.na(data[,1]))
+missValData <- data
+for(i in 1:nrow(missValData)){
+  if (is.na(missValData[i,1]))
+		missValData[i,1] <- meandata[[toString(missValData[i,3])]]
+}
+sum(is.na(missValData[,1]))
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+missValData$daytype <- factor(weekdays(as.Date(missValData$date), abbreviate = TRUE), labels=c('weekday','weekday','weekday','weekday','weekday','weekend','weekend'), levels=c('Mon','Tue','Wed','Thu','Fri','Sat','Sun'))
+
+wkData <- subset(missValData, missValData$daytype == 'weekday')
+wkEndData <- subset(missValData, missValData$daytype == 'weekend')
+
+par(mfrow=c(2,1))
+dev.copy(png,file="WeekWeekEnd.png", width=480, height=480)
+plot(tapply(wkData$steps, wkData$interval, FUN = mean), type="l", ylab="Mean Step Interval", xlab="", main="Weekday")
+plot(tapply(wkEndData$steps, wkEndData$interval, FUN = mean), type="l", ylab="Mean Step Interval", xlab="Interval", main="Weekend")
+dev.off()
+par(mfrow=c(1,1))
